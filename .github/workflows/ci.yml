@@ -1,0 +1,47 @@
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  testes:
+    runs-on: ${{ matrix.so }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        so: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # O juiz conta MOVIMENTOS sem normalizar o jogador; a busca conta
+      # EMPURROES com a regiao canonica. Os numeros sao diferentes de
+      # proposito: o que tem de bater e quem tem solucao.
+      - name: testes
+        run: dotnet test testes/Sokoban.Testes/Sokoban.Testes.csproj -c Release --nologo -v q
+
+      - name: todos os niveis de cada tamanho
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- tabela
+
+      - name: o nivel mais dificil de cada tamanho
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- recordistas
+
+      - name: quantos niveis tem cada numero de empurroes
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- histograma
+
+      - name: o juiz contra a busca, nivel a nivel
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- juiz
+
+      - name: a regra do canto morto
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- poda
+
+      - name: a poda ligada contra a poda desligada, em tabela cruzada
+        run: dotnet run --project ferramentas/Medidor/Medidor.csproj -c Release -- cruzada
